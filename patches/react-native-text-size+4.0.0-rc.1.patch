@@ -1,0 +1,18 @@
+diff --git a/node_modules/react-native-text-size/android/build.gradle b/node_modules/react-native-text-size/android/build.gradle
+index 2617bd7..8c040de 100644
+--- a/node_modules/react-native-text-size/android/build.gradle
++++ b/node_modules/react-native-text-size/android/build.gradle
+@@ -8,10 +8,9 @@ def safeExtGet(prop, fallback) {
+     return rootProject.ext.hasProperty(prop) ? rootProject.ext.get(prop) : fallback
+ }
+ 
+-def _buildToolsVersion  = safeExtGet('buildToolsVersion', '28.0.3')
+-def _compileSdkVersion  = safeExtGet('compileSdkVersion', 28)
+-def _targetSdkVersion   = safeExtGet('targetSdkVersion', 28)
+-def _minSdkVersion      = safeExtGet('minSdkVersion', 16)
++def _compileSdkVersion  = 35
++def _targetSdkVersion   = 35
++def _minSdkVersion      = 24 // 24 is Expo's current minimum
+ 
+ buildscript {
+     repositories {
