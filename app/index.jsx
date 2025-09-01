@@ -460,6 +460,29 @@ function MainScreen({ route, navigation }) {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const flatListRef = useRef(null);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [raktas, setRaktas] = useState(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const fileUri = `${FileSystem.documentDirectory}content.json`;
+      try {
+        const fileInfo = await FileSystem.getInfoAsync(fileUri);
+        if (!fileInfo.exists) throw new Error('File not found.');
+        const content = await FileSystem.readAsStringAsync(fileUri);
+        const json = JSON.parse(content);
+        setParticipants(json.PARTICIPANTS || []);
+
+        if (json.raktas) {
+          setRaktas(json.raktas);
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
   useEffect(() => {
     const uploadInterval = setInterval(() => {
@@ -480,7 +503,10 @@ function MainScreen({ route, navigation }) {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ participants: changed }),
+        body: JSON.stringify({
+          participants: changed,
+          raktas
+         }),
       });
 
       if (!response.ok) {
@@ -510,24 +536,6 @@ function MainScreen({ route, navigation }) {
 
     return () => clearInterval(interval);
   }, [offset]);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      const fileUri = `${FileSystem.documentDirectory}content.json`;
-      try {
-        const fileInfo = await FileSystem.getInfoAsync(fileUri);
-        if (!fileInfo.exists) throw new Error('File not found.');
-        const content = await FileSystem.readAsStringAsync(fileUri);
-        const json = JSON.parse(content);
-        setParticipants(json.PARTICIPANTS || []);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
 
   const visibleParticipants = useMemo(() => {
     return participants.filter(p =>
