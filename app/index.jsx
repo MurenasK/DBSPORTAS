@@ -10,7 +10,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import * as FileSystem from 'expo-file-system';
 import DBSportLogo from '../assets/images/DBSportLogo.js';
-import { getCurrentTimestamp, getRecentUpdates, sendData } from './utils.js';
+import { getCurrentTimestamp, getRecentUpdates, sendData } from '../utils/utils.js';
 
 
 
@@ -58,39 +58,8 @@ function StartScreen({ navigation }) {
 function DBDetailsInputScreen({ navigation }) {
   const [www_id, setwww_id] = useState('');
   const [day, setDay] = useState('');
-  const [email, setEmail] = useState('');
 
-  useEffect(() => {
-    const defaultValues = [
-      ['duration', '200'],
-      ['frequency', '700'],
-      ['server_addr', '127.0.0.1'],
-      ['status', 'STATUS_NONE'], // status should be a string if it's not a variable
-      ['time_diff', '0'],
-      ['CLASSES', '{}'],
-      ['COUNT', '0'],
-      ['DAY', '1'],
-      ['PARTICIPANTS', '[]'],
-      ['START', '0'],
-      ['TITLE', ''],
-      ['WWW_ID', '']
-    ];
-
-    defaultValues.forEach(async([key, value]) => {
-      try{
-        const existingValue = await AsyncStorage.getItem(key);
-        if(existingValue == null) {
-          await AsyncStorage.setItem(key, value);
-        }
-      } catch (error) {
-        console.error('Error', error);
-      }
-    })
-  }, []);
-
-  const handlePress = async (e) => {
-    e.preventDefault();
-
+  const handlePress = async () => {
     if (!www_id || !day) {
       Alert.alert('Neteisinga įvestis');
       return;
@@ -98,66 +67,23 @@ function DBDetailsInputScreen({ navigation }) {
 
     try {
       const response = await fetch(
-        `https://dbsportas.lt/ajaxvarz.php?action=si&varz=${www_id}&diena=${day}&action=si`,
-        { method: 'GET' }
+        `https://dbsportas.lt/ajaxvarz.php?action=si&varz=${www_id}&diena=${day}&action=si`
       );
 
       const data = await response.json();
 
-      // Storing in AsyncStorage with stringified values
-      await AsyncStorage.setItem('DAY', String(data['DAY']));
-      await AsyncStorage.setItem('START', String(data['START']));
-      await AsyncStorage.setItem('TITLE', String(data['TITLE']));
-      await AsyncStorage.setItem('WWW_ID', String(data['WWW_ID'])); // Stringify WWW_ID
-      console.log('Full API response:', data);
-      const participants = data['PARTICIPANTS'];
-      if (!Array.isArray(participants)) {
-        throw new Error('PARTICIPANTS is not an array or is missing');
-      }
-      await AsyncStorage.setItem('COUNT', participants.length.toString());
+      await AsyncStorage.setItem('DAY', String(data.DAY));
+      await AsyncStorage.setItem('START', String(data.START));
+      await AsyncStorage.setItem('TITLE', String(data.TITLE));
+      await AsyncStorage.setItem('WWW_ID', String(data.WWW_ID));
 
-      const classes = {};
-      const updatedParticipants = participants
-        .map(participant => {
-          const updatedParticipant = { ...participant };
-          if (!classes.hasOwnProperty(updatedParticipant['CLASS'])) {
-            classes[updatedParticipant['CLASS']] = 1;
-          }
-          updatedParticipant['STARTED'] = updatedParticipant['START_INFO'].substr(0, 1) ? 'checked' : '';
-          updatedParticipant['NOTES'] = updatedParticipant['START_INFO'].substr(1);
-          return updatedParticipant;
-        })
-        .sort((a, b) => {
-          return a.START - b.START;
-        })
-
-      await AsyncStorage.setItem('CLASSES', JSON.stringify(classes));  // Stringify classes
-      await AsyncStorage.setItem('PARTICIPANTS', JSON.stringify(updatedParticipants)); // Stringify participants
-
-      const jsonData = {
-        DAY: data['DAY'],
-        START: data['START'],
-        TITLE: data['TITLE'],
-        WWW_ID: data['WWW_ID'],
-        COUNT: participants.length,
-        CLSSES: classes,
-        PARTICIPANTS: updatedParticipants,
-      };
-
-      const fileUri = `${FileSystem.documentDirectory}content.json`;
-      await FileSystem.writeAsStringAsync(fileUri, JSON.stringify(jsonData, null, 2));
-      console.log(`File saved at ${fileUri}`);
-
-      // pass data to Details
+      const participants = data.PARTICIPANTS || [];
+      await AsyncStorage.setItem('PARTICIPANTS', JSON.stringify(participants));
+      await AsyncStorage.setItem('COUNT', String(participants.length));
 
       navigation.navigate('Pasirinkimai');
-
-
-      //restoreStatusLoaded();
-
-    } catch (error) {
-      console.error('Fetch error:', error);
-      error_message(error);
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -167,7 +93,7 @@ function DBDetailsInputScreen({ navigation }) {
         onPress={() => navigation.goBack()}
         style={{
           position: 'absolute',
-          top: 10, // <- adjust this to move it higher
+          top: 10, 
           right: 20,
           zIndex: 10,
         }}
